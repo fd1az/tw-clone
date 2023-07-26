@@ -1,0 +1,44 @@
+# https://docs.docker.com/compose/compose-file
+# docker-compose up
+# docker-compose stop
+# docker-compose down
+version: "3"
+services:
+  postgres_tw:
+    image: postgres:11
+    container_name: tw-db
+    restart: always
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=tw-db
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_USER=fdiaz
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - ".db/data:/var/lib/postgresql/data"
+    networks:
+      - tw-clone
+  pls_hasura:
+    image: hasura/graphql-engine:latest
+    container_name: pls_hasura
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres_pls"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgresql://fdiaz:secret@host.docker.internal:5432/tw-db
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_ADMIN_SECRET: secreto
+    networks:
+      - tw-clone
+networks:
+  tw-clone:
+    name: tw-clone
+volumes:
+  db_data:
